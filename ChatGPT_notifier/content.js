@@ -1,12 +1,18 @@
 const audio = new Audio(chrome.runtime.getURL('notification.mp3'));
 
-// audio.play();
-function observeDOMChanges() {
-  const bodyObserver = new MutationObserver((mutations) => {
+function checkForResultStreamingClass() {
+  return Array.from(document.querySelectorAll('.result-streaming'));
+}
+
+function observeClassChanges(elements) {
+  const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
-      if (mutation.target.children.length > 0) {
-        if (mutation.target.children[0].tagName === "svg") {
-          let text = "..."
+      if (mutation.attributeName === 'class') {
+        const oldClassList = mutation.oldValue.split(' ');
+        const newClassList = mutation.target.className.split(' ');
+
+        if (oldClassList.includes('result-streaming') && !newClassList.includes('result-streaming')) {
+          let text = ""
           try {
             const multiple = document.querySelectorAll('.markdown.prose.w-full.break-words.dark\\:prose-invert.light')
             text = multiple[multiple.length - 1].innerText
@@ -21,7 +27,30 @@ function observeDOMChanges() {
     });
   });
 
+  elements.forEach((element) => {
+    observer.observe(element, { attributes: true, attributeOldValue: true, attributeFilter: ['class'] });
+  });
+}
+
+function observeDOMChanges() {
+  const bodyObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'childList') {
+        const newResultStreamingElements = checkForResultStreamingClass();
+        if (newResultStreamingElements.length > 0) {
+          observeClassChanges(newResultStreamingElements);
+        }
+      }
+    });
+  });
+
   bodyObserver.observe(document.body, { childList: true, subtree: true });
+}
+
+const resultStreamingElements = checkForResultStreamingClass();
+
+if (resultStreamingElements.length > 0) {
+  observeClassChanges(resultStreamingElements);
 }
 
 observeDOMChanges();
