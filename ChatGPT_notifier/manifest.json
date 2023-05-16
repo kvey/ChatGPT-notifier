@@ -6,6 +6,10 @@
   "icons": {
     "128": "logo.png"
   },
+  "permissions": ["notifications"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["https://chat.openai.com/*"],
